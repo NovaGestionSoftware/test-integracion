@@ -117,7 +117,7 @@ export default function FacturaElectronicaView() {
   const [caeResult, setCaeResult] = useState<unknown>(null);
 
   const logsRef = useRef<HTMLDivElement | null>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [_logs, setLogs] = useState<LogEntry[]>([]);
 
   const addLog = useCallback((msg: string) => {
     setLogs((prev) => [...prev, { ts: new Date().toLocaleString(), msg }]);
