@@ -5,8 +5,8 @@ type Option = { value: string; label: string };
 const SELECT_1_OPTIONS: Option[] = [
   { value: "542612176999", label: "2612176999" },
   { value: "543472581689", label: "3472581689" },
-  { value: "542645326229", label: "2645326229" },
-  { value: "543804797956", label: "3804797956" },
+  { value: "54264155326229", label: "2645326229" },
+  { value: "54380154797956", label: "3804797956" },
   { value: "541132551333", label: "1132551333" },
 ];
 
@@ -18,7 +18,6 @@ const SELECT_2_OPTIONS: Option[] = [
 const API_ENDPOINT = `${import.meta.env.VITE_BASE_URL_PHP}/meta/enviaWsp.php`;
 
 export default function WhatAppIntegrationView() {
-
   const [select1, setSelect1] = useState<string>("");
   const [select2, setSelect2] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,10 +96,7 @@ export default function WhatAppIntegrationView() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Select 1 */}
           <div>
-            <label
-              htmlFor="select1"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="select1" className="mb-2 block text-sm font-medium text-gray-700">
               Números de teléfono
             </label>
             <select
@@ -123,10 +119,7 @@ export default function WhatAppIntegrationView() {
 
           {/* Select 2 */}
           <div>
-            <label
-              htmlFor="select2"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="select2" className="mb-2 block text-sm font-medium text-gray-700">
               Plantillas
             </label>
             <select
@@ -159,7 +152,6 @@ export default function WhatAppIntegrationView() {
               {successMsg}
             </div>
           )}
-
 
           <button
             type="submit"
