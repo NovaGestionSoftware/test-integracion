@@ -15,6 +15,7 @@ import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { AnimatedOverflowText } from "./Components/AnimatedOverflowText";
 import { BsWhatsapp } from "react-icons/bs";
 import { TiHome } from "react-icons/ti";
+import { FaFileInvoiceDollar } from "react-icons/fa";
 type SideBarProps = {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -41,6 +42,12 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
       href: "/wpp",
       icon: <BsWhatsapp />,
       orden: 2,
+    },
+       {
+      title: "Factura Electronica",
+      href: "/fac-elec",
+      icon: <FaFileInvoiceDollar />,
+      orden: 3,
     },
   ];
 

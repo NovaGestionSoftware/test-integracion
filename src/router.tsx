@@ -3,6 +3,7 @@ import Layout from "./views/layout/layout";
 import DashboardView from "./views/dashboard/DashboardView";
 import WhatAppIntegrationView from "./views/whatsapp/WhatAppIntegrationView";
 import Home from "./views/home/HomeView";
+import FacturaElectronicaView from "./views/FacturaElectronica/FacturaElectronicaView";
 
 const router = createBrowserRouter([
   {
@@ -13,7 +14,8 @@ const router = createBrowserRouter([
       { path: "home", element: <Home /> },
       { path: "dashboard", element: <DashboardView /> },
       { path: "wpp", element: <WhatAppIntegrationView /> },
-      // 404 para rutas dentro del layout
+      { path: "fac-elec", element: <FacturaElectronicaView /> },
+      // 404 para rutas dentro del layout fac-elec
       { path: "*", element: <div style={{ padding: 24 }}>404</div> },
     ],
   },
