@@ -16,6 +16,7 @@ import { AnimatedOverflowText } from "./Components/AnimatedOverflowText";
 import { BsWhatsapp } from "react-icons/bs";
 import { TiHome } from "react-icons/ti";
 import { FaFileInvoiceDollar } from "react-icons/fa";
+import { SiMercadopago } from "react-icons/si";
 type SideBarProps = {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -43,11 +44,18 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
       icon: <BsWhatsapp />,
       orden: 2,
     },
-       {
+    {
       title: "Factura Electronica",
       href: "/fac-elec",
       icon: <FaFileInvoiceDollar />,
       orden: 3,
+    },
+    {
+      title: "Mercado Pago",
+      href: "/mp",
+      icon: <SiMercadopago className="scale-125" />,
+      // icon: <img src={icon} alt="icon-mercado-pago" className="w-6 h-6" />,
+      orden: 4,
     },
   ];
 
