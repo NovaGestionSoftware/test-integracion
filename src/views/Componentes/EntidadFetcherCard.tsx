@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { FaSyncAlt } from "react-icons/fa";
 import { Card } from "./Card";
 import RefreshButton from "./RefreshButton";
-import SwitchGenerico from "./Switch";
 
 interface EntidadBase {
   id: string | number;
@@ -58,25 +56,24 @@ export function EntidadFetcherCard<T extends EntidadBase>({
 
   renderItem,
   responseRaw,
-  defaultShowResponse = false,
-  showResponse,
-  onToggleShowResponse,
+  // defaultShowResponse = false,
+  // showResponse,
+  // onToggleShowResponse,
   onRefresh,
   isLoading = false,
   loadingMessage = "Cargando…",
   leftFixedWidthClass = "w-full md:w-[420px]", // <- default: fijo en md+
 }: Props<T>) {
-  const [internalShow, setInternalShow] =
-    useState<boolean>(defaultShowResponse);
-  const isControlled = typeof showResponse === "boolean";
-  const isShown = isControlled ? (showResponse as boolean) : internalShow;
-
+  // const [internalShow, setInternalShow] = useState<boolean>(defaultShowResponse);
+  // const isControlled = typeof showResponse === "boolean";
+  // const isShown = isControlled ? (showResponse as boolean) : internalShow;
+  const isShown = true;
   const tieneItems = !!items && items.length > 0;
 
-  const setShown = (next: boolean) => {
-    if (isControlled) onToggleShowResponse?.(next);
-    else setInternalShow(next);
-  };
+  // const setShown = (next: boolean) => {
+  //   if (isControlled) onToggleShowResponse?.(next);
+  //   else setInternalShow(next);
+  // };
 
   const handleRefresh = () => {
     if (onRefresh) return onRefresh();
@@ -92,21 +89,13 @@ export function EntidadFetcherCard<T extends EntidadBase>({
       className="p-6 h-full min-h-[260px] min-w-[205px] flex flex-col rounded-lg shadow bg-white"
     >
       {/* Barra de acciones */}
-      <div className="flex items-center gap-3 mb-3">
-        <SwitchGenerico
-          className=""
-          label="Respuesta"
-          valueOff="Oculto"
-          valueOn="Visible"
-          isChecked={isShown}
-          onToggle={() => setShown(!isShown)}
-        />
-        <RefreshButton handleRefresh={handleRefresh} />
-      </div>
 
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-green-700 text-sm font-medium">{titulo}</p>
+        <p className="text-green-700 text-lg font-medium">{titulo}</p>
+        <div className="flex items-center justify-end gap-3 mb-3">
+          <RefreshButton handleRefresh={handleRefresh} />
+        </div>
       </div>
 
       {/* Layout: izquierda fija, derecha flexible */}
