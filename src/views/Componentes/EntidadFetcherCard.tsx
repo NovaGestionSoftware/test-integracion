@@ -16,11 +16,11 @@ type Props<T extends EntidadBase> = {
   onSeleccionarItem: (item: T) => void;
   mostrarFormulario: boolean;
   toggleMostrarFormulario: () => void;
-  FormularioComponente: React.ReactNode;
-  sinResultadosTexto: string;
+  FormularioComponente?: React.ReactNode;
+  sinResultadosTexto?: string;
   onRetry?: () => void;
   mostrarRetry?: boolean;
-  botonCrearTexto: string;
+  botonCrearTexto?: string;
   renderItem?: (
     item: T,
     isSelected: boolean,

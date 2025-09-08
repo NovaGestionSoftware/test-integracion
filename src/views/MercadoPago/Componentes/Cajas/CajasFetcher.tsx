@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useMercadoPagoStore } from "../../Store/MercadoPagoStore";
-import CrearCajaForm from "./CrearCajasForm";
 import { EntidadFetcherCard } from "../../../Componentes/EntidadFetcherCard";
 
 const API_BASE = `${import.meta.env.VITE_BASE_URL_PHP}/`; // termina en "/"
@@ -166,11 +165,9 @@ export default function CajasFetcher() {
       onSeleccionarItem={(c: CajaLite) => setCajaSeleccionada(c as any)}
       mostrarFormulario={mostrarCrearCaja}
       toggleMostrarFormulario={() => setMostrarCrearCaja(!mostrarCrearCaja)}
-      FormularioComponente={<CrearCajaForm />}
-      sinResultadosTexto="No se encontraron cajas."
+      sinResultadosTexto="No se encontraron cajas"
       onRefresh={() => setRetryFetch(true)}
       mostrarRetry={true}
-      botonCrearTexto="Crear nueva caja"
       renderItem={renderCajaItem}
       // Panel “Ver respuesta”
       responseRaw={rawCajasResponse}

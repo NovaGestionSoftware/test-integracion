@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMercadoPagoStore } from "../../Store/MercadoPagoStore";
 import { EntidadFetcherCard } from "../../../Componentes/EntidadFetcherCard";
-import CrearSucursalForm from "./CrearSucursalForm";
 
 const API_BASE = `${import.meta.env.VITE_BASE_URL_PHP}/`; // mantiene la barra final
 
@@ -99,7 +98,6 @@ export default function SucursalesFetcher() {
       onSeleccionarItem={setSucursalSeleccionada}
       mostrarFormulario={mostrarCrear}
       toggleMostrarFormulario={() => setMostrarCrear(!mostrarCrear)}
-      FormularioComponente={<CrearSucursalForm />}
       sinResultadosTexto="No se encontraron sucursales."
       onRefresh={() => setRetryFetch(true)}
       mostrarRetry={true}
