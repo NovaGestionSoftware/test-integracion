@@ -1,14 +1,15 @@
-/** Radio estilo “pill” (reutilizable) */
 export function RadioPill({
   name,
   checked,
   onChange,
   label,
+  disabled,
 }: {
   name: string;
   checked: boolean;
   onChange: () => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <label className="cursor-pointer">
@@ -17,7 +18,8 @@ export function RadioPill({
         name={name}
         checked={checked}
         onChange={onChange}
-        className="peer sr-only"
+        className={`peer sr-only ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+        disabled={disabled}
       />
       <span
         className="select-none rounded-xl border border-zinc-300 px-3 py-2 text-sm 

@@ -4,14 +4,12 @@ import { EntidadFetcherCard } from "../../../Componentes/EntidadFetcherCard";
 
 const API_BASE = `${import.meta.env.VITE_BASE_URL_PHP}/`; // mantiene la barra final
 
-// Tipo liviano para la vista / store
 export type SucursalLite = {
   id: string;
   name: string;
   external_store_id: string; // renombrado desde external_id
 };
 
-// Tipos mínimos del API (lo que usamos)
 type ApiSucursal = {
   id: string;
   name: string;
@@ -92,7 +90,7 @@ export default function SucursalesFetcher() {
 
   return (
     <EntidadFetcherCard<SucursalLite>
-      titulo="Sucursales existentes:"
+      titulo="Sucursales:"
       items={sucursales}
       itemSeleccionado={sucursalSeleccionada}
       onSeleccionarItem={setSucursalSeleccionada}
@@ -104,7 +102,6 @@ export default function SucursalesFetcher() {
       botonCrearTexto="Crear nueva sucursal"
       responseRaw={rawSucursalesResponse}
       defaultShowResponse={false}
-      // NUEVO: loading dentro de la card
       isLoading={isLoadingSucursales}
       loadingMessage="Consultando sucursales..."
     />

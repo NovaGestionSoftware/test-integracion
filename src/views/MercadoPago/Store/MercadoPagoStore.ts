@@ -10,11 +10,7 @@ import {
   createCajasSlice,
   type CajasSlice,
 } from "./CajasSlice";
-import {
-  createOrdenesSlice,
-  ordenesInitialState,
-  type OrdenesSlice,
-} from "./OrdenesSlice";
+
 import { createUiSlice, uiInitialState, type UiSlice } from "./UiSlice";
 
 // ⬇️ NUEVO
@@ -23,34 +19,40 @@ import {
   methodInitialState,
   type MethodSlice,
 } from "./MethodSlice";
-import { amountInitialState, createAmountSlice, type AmountSlice } from "./AmountSlice";
+import {
+  amountInitialState,
+  createAmountSlice,
+  type AmountSlice,
+} from "./AmountSlice";
+import { createOrdersSlice, ordersInitialState, type OrdersSlice } from "./OrderSlice";
 
 type MercadoPagoStore = SucursalesSlice &
   CajasSlice &
-  OrdenesSlice &
   UiSlice &
   MethodSlice &
-  AmountSlice & {
+  AmountSlice &
+  OrdersSlice & {
     resetStore: () => void;
   };
 
 const initialState = {
   ...sucursalesInitialState,
   ...cajasInitialState,
-  ...ordenesInitialState,
+  ...ordersInitialState,
   ...uiInitialState,
   ...methodInitialState,
   ...amountInitialState,
+  ...ordersInitialState,
 };
 
 export const useMercadoPagoStore = create<MercadoPagoStore>()(
   (set, get, store) => ({
     ...createSucursalesSlice(set, get, store),
     ...createCajasSlice(set, get, store),
-    ...createOrdenesSlice(set, get, store),
     ...createUiSlice(set, get, store),
     ...createMethodSlice(set, get, store),
-       ...createAmountSlice(set, get, store),
+    ...createAmountSlice(set, get, store),
+    ...createOrdersSlice(set, get, store),
     resetStore: () => set(initialState),
   })
 );

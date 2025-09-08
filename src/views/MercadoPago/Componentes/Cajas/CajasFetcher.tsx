@@ -146,7 +146,6 @@ export default function CajasFetcher() {
         ID externo: {caja.external_id || "—"}
       </span>
 
-      {/* Si más adelante querés mostrar un preview del QR: */}
       {caja.qr?.image && (
         <img
           src={caja.qr.image}
@@ -159,7 +158,7 @@ export default function CajasFetcher() {
 
   return (
     <EntidadFetcherCard<CajaLite>
-      titulo="Cajas disponibles:"
+      titulo="Cajas:"
       items={cajas}
       itemSeleccionado={cajaSeleccionada as unknown as CajaLite | null}
       onSeleccionarItem={(c: CajaLite) => setCajaSeleccionada(c as any)}

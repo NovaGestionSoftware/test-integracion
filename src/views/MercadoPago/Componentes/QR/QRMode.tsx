@@ -1,33 +1,32 @@
-import { useState } from "react";
 import { RadioPill } from "../../../Componentes/RadioPill";
+import { useMercadoPagoStore } from "../../Store/MercadoPagoStore";
 
-type ModoQR = "static" | "dynamic" | "hybrid";
 export default function QRModeSelect() {
-  const [modoQR, setModoQR] = useState<ModoQR | "">("");
-  
+  const { qrMode, setQrMode } = useMercadoPagoStore();
+
   return (
     <div className="flex flex-wrap gap-2 p-4 bg-gray-200 bg-opacity-5 rounded-2xl w-fit">
       <RadioPill
         name="qr-mode"
-        checked={modoQR === "static"}
+        checked={qrMode === "static"}
         onChange={() => {
-          setModoQR("static");
+          setQrMode("static");
         }}
         label="Static"
       />
       <RadioPill
         name="qr-mode"
-        checked={modoQR === "dynamic"}
+        checked={qrMode === "dynamic"}
         onChange={() => {
-          setModoQR("dynamic");
+          setQrMode("dynamic");
         }}
         label="Dynamic"
       />
       <RadioPill
         name="qr-mode"
-        checked={modoQR === "hybrid"}
+        checked={qrMode === "hybrid"}
         onChange={() => {
-          setModoQR("hybrid");
+          setQrMode("hybrid");
         }}
         label="Hybrid"
       />

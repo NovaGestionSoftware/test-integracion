@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMercadoPagoStore } from "../../Store/MercadoPagoStore";
+import RefreshButton from "../../../Componentes/RefreshButton";
 
 const API_BASE = `${import.meta.env.VITE_BASE_URL_PHP}/`; // termina en "/"
 
@@ -42,20 +44,23 @@ export default function TerminalesSelect({
   onSelect,
   refreshKey,
   hideChangeModeButton = false,
-  className = "",
 }: Props) {
   const [terminales, setTerminales] = useState<TerminalLite[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const {
+    terminalId,
+    setTerminalId,
+    shouldPrint,
+    setShouldPrint,
+  } = useMercadoPagoStore();
+
   const isControlled = typeof selectedId !== "undefined";
-  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
-    defaultSelectedId
-  );
-  const currentSelectedId = isControlled
-    ? selectedId ?? null
-    : internalSelectedId;
+
+  // currentSelectedId: si es controlado usa prop; si no, usa la store
+  const currentSelectedId = isControlled ? selectedId ?? null : terminalId ?? null;
 
   const urlGet = `${API_BASE}mercadopago/obtenerTerminales.php`;
   const urlPostCambiarModo = `${API_BASE}mercadopago/cambiarModoTerminal.php`;
@@ -88,16 +93,15 @@ export default function TerminalesSelect({
         );
       }
       if (!Array.isArray(data?.data?.terminals)) {
-        throw new Error(
-          "Estructura inesperada: 'data.terminals' no es un array"
-        );
+        throw new Error("Estructura inesperada: 'data.terminals' no es un array");
       }
 
       const rows = normalize(data);
       setTerminales(rows);
-      // Si la selección no existe más, reseteamos
-      if (currentSelectedId && !rows.find((t) => t.id === currentSelectedId)) {
-        if (!isControlled) setInternalSelectedId(null);
+
+      // Si la selección actual no existe más, reseteamos (solo en modo no controlado)
+      if (!isControlled && currentSelectedId && !rows.find((t) => t.id === currentSelectedId)) {
+        setTerminalId(null);
       }
     } catch (e: any) {
       console.error("Error al obtener terminales:", e);
@@ -108,10 +112,20 @@ export default function TerminalesSelect({
     }
   };
 
+  // Init: carga terminales
   useEffect(() => {
     if (terminales === null) fetchTerminales();
-  }, []); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Init: si no es controlado y hay defaultSelectedId, setearlo en la store si aún no hay selección
+  useEffect(() => {
+    if (!isControlled && defaultSelectedId && terminalId == null) {
+      setTerminalId(defaultSelectedId);
+    }
+  }, [isControlled, defaultSelectedId, terminalId, setTerminalId]);
+
+  // Refetch por refreshKey
   useEffect(() => {
     if (refreshKey !== undefined) {
       fetchTerminales();
@@ -121,11 +135,9 @@ export default function TerminalesSelect({
   const handleRetry = () => fetchTerminales();
 
   const handleSelect = (t: TerminalLite) => {
-    if (isControlled) onSelect?.(t);
-    else {
-      setInternalSelectedId(t.id);
-      onSelect?.(t);
-    }
+    // Siempre sincronizamos la store
+    setTerminalId(t.id);
+    onSelect?.(t);
   };
 
   const cambiarModo = async (t: TerminalLite) => {
@@ -181,9 +193,7 @@ export default function TerminalesSelect({
     if (!terminales || terminales.length === 0) {
       return (
         <div className="space-y-3">
-          <p className="text-yellow-700 text-sm">
-            No se encontraron terminales.
-          </p>
+          <p className="text-yellow-700 text-sm">No se encontraron terminales.</p>
           <button
             onClick={handleRetry}
             className="inline-flex items-center gap-2 px-3 py-1 text-blue-600 border border-blue-500 rounded-md text-sm hover:bg-blue-50 transition"
@@ -195,13 +205,10 @@ export default function TerminalesSelect({
     }
 
     return (
-      <div
-        className={`space-y-2 p-1 rounded-sm border noneScroll ${contentScrollClass}`}
-      >
+      <div className={`space-y-2 p-1 rounded-sm border noneScroll ${contentScrollClass}`}>
         {terminales.map((t) => {
           const isSelected = currentSelectedId === t.id;
-          const isStandalone =
-            (t.operating_mode || "").toUpperCase() === "STANDALONE";
+          const isStandalone = (t.operating_mode || "").toUpperCase() === "STANDALONE";
           const isRowLoading = actionLoadingId === t.id;
 
           return (
@@ -258,30 +265,50 @@ export default function TerminalesSelect({
         })}
       </div>
     );
-  }, [terminales, currentSelectedId, loading, errorMsg, actionLoadingId]);
+  }, [terminales, currentSelectedId, loading, errorMsg, actionLoadingId, hideChangeModeButton]);
 
   return (
-    <div
-      className={`bg-white rounded-2xl shadow-sm border border-zinc-200 p-4 ${className}`}
-    >
+    <div className={""}>
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-medium">Terminales (Point)</h2>
-          <p className="text-sm text-zinc-500">
-            Seleccioná una terminal para operar
-          </p>
+          <p className="text-sm text-zinc-500">Seleccioná una terminal para operar</p>
         </div>
-        <button
-          onClick={handleRetry}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50 hover:cursor-pointer"
-          title="Refrescar"
-        >
-          Refrescar
-        </button>
+        <RefreshButton handleRefresh={handleRetry} />
+    
       </div>
 
       {body}
 
+      {/* Imprimir ticket: Sí / No */}
+      <div className="mt-4">
+        <p className="text-sm font-medium">Imprimir ticket</p>
+        <div className="mt-1 flex items-center gap-6">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="printTicket"
+              value="no"
+              checked={!shouldPrint}
+              onChange={() => setShouldPrint(false)}
+              className="form-radio text-zinc-700"
+            />
+            No
+          </label>
+
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="printTicket"
+              value="si"
+              checked={shouldPrint}
+              onChange={() => setShouldPrint(true)}
+              className="form-radio text-zinc-700"
+            />
+            Sí
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
