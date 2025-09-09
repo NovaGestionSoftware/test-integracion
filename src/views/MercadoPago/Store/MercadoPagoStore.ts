@@ -1,4 +1,3 @@
-// store.ts
 import { create } from "zustand";
 import {
   createSucursalesSlice,
@@ -25,13 +24,15 @@ import {
   type AmountSlice,
 } from "./AmountSlice";
 import { createOrdersSlice, ordersInitialState, type OrdersSlice } from "./OrderSlice";
+import { createInspectorSlice, inspectorInitialState, type InspectorSlice } from "./InspectorSlice";
 
 type MercadoPagoStore = SucursalesSlice &
   CajasSlice &
   UiSlice &
   MethodSlice &
   AmountSlice &
-  OrdersSlice & {
+  OrdersSlice & 
+  InspectorSlice & {
     resetStore: () => void;
   };
 
@@ -43,6 +44,7 @@ const initialState = {
   ...methodInitialState,
   ...amountInitialState,
   ...ordersInitialState,
+  ...inspectorInitialState
 };
 
 export const useMercadoPagoStore = create<MercadoPagoStore>()(
@@ -53,6 +55,7 @@ export const useMercadoPagoStore = create<MercadoPagoStore>()(
     ...createMethodSlice(set, get, store),
     ...createAmountSlice(set, get, store),
     ...createOrdersSlice(set, get, store),
+    ...createInspectorSlice(set, get, store),
     resetStore: () => set(initialState),
   })
 );

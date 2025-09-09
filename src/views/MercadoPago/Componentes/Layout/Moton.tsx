@@ -72,23 +72,18 @@ export default function Monto() {
       <input
         ref={inputRef}
         type="text"
-        inputMode="numeric"         // teclado numérico en mobile
+        inputMode="numeric" 
         value={amount ? formatCurrency(amount) : ""}
-        onKeyDown={handleKeyDown}   // manejamos todo por teclado
-        onPaste={handlePaste}       // y el pegado
-        onChange={() => {}}         // no usamos onChange para evitar loops
+        onKeyDown={handleKeyDown} 
+        onPaste={handlePaste}      
+        onChange={() => {}}         
         placeholder="$ 0,00"
         className="mt-1 w-full rounded-xl border border-zinc-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-300"
       />
 
   {method !== "" && parsedAmount > 0 && (
   <>
-    {method === "QR" && parsedAmount < 1 && (
-      <p className="text-xs text-red-600 mt-1">
-        El monto debe ser mayor a $1.00
-      </p>
-    )}
-    {method === "POINT" && parsedAmount < 15 && (
+    {parsedAmount < 15 && (
       <p className="text-xs text-red-600 mt-1">
         El monto debe ser mayor a $15.00
       </p>

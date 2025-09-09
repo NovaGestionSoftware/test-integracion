@@ -1,6 +1,13 @@
 import { useMemo, useState, useCallback } from "react";
 import { useMercadoPagoStore } from "../../Store/MercadoPagoStore";
 import SendButton from "../../../Componentes/SendButton";
+import CancelButton from "../../../Componentes/Buttons/CancelButton";
+import QueryOrderButton from "../../../Componentes/Buttons/QueryOrderButton";
+import QueryPayButton from "../../../Componentes/Buttons/QueryPayButton";
+import NewOrderButton from "../../../Componentes/Buttons/NewOrderButton";
+import type { Order, QrPayload } from "../../../types";
+import { OrderPanel } from "./OrderPanel";
+import type { InspectorSlice } from "../../Store/InspectorSlice";
 
 const API_BASE = `${import.meta.env.VITE_BASE_URL_PHP}/mercadopago`;
 const API_CREAR_ORDEN = `${API_BASE}/crearOrden.php`;
@@ -19,11 +26,26 @@ type CreatePointBody = {
 };
 type CreateBody = CreateQRBody | CreatePointBody;
 
+/* ---------------- Inspector helpers ---------------- */
+const useInspector = <T,>(selector: (s: InspectorSlice) => T) =>
+  useMercadoPagoStore((s) => selector(s as unknown as InspectorSlice));
+
+// id simple 
+const rid = () => `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+
+function nowMs() {
+  return performance?.now?.() ?? Date.now();
+}
+
 export default function CreateOrder() {
   const [checking, setChecking] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [consulting, setConsulting] = useState(false);
+
+  // Inspector actions
+  const pushSuccess = useInspector((s) => s.pushSuccess);
+  const pushError = useInspector((s) => s.pushError);
 
   const {
     method,
@@ -39,6 +61,7 @@ export default function CreateOrder() {
 
   const isValid = useMemo(() => {
     if (!(parsedAmount > 0)) return false;
+    if (parsedAmount < 15) return false;
     if (method === "POINT" && !terminalId) return false;
     return true;
   }, [parsedAmount, method, terminalId]);
@@ -60,15 +83,16 @@ export default function CreateOrder() {
     (method === "POINT" && statusDetail === "processed");
 
   // Mostrar consultar/cancelar solo cuando está creada y aún no acreditada
-  const canShowQueryCancel =
-    statusDetail === "created" && Boolean(currentOrder?.id || currentOrderId);
+const canShowQueryCancel =
+  (["created", "at_terminal"] as const).includes((statusDetail ?? "") as any) &&
+  Boolean(currentOrder?.id || currentOrderId);
 
   const montoFromOrder =
     (currentOrder as any)?.transactions?.payments?.[0]?.amount ??
     (currentOrder as any)?.amount ??
     String(parsedAmount);
 
-  // ---------- extractQr: mapea tu respuesta ----------
+  // ---------- extractQr: mapea respuesta ----------
   const extractQr = (order: any) => {
     if (!order) return null;
     const qrDataFromTypeResponse = order?.type_response?.qr_data;
@@ -116,6 +140,8 @@ export default function CreateOrder() {
     statusDetail === "created" &&
     !!qrPayload;
 
+  /* ---------------- Handlers con logging al Inspector ---------------- */
+
   const handleCreateOrder = useCallback(async () => {
     if (!isValid) return;
 
@@ -133,8 +159,12 @@ export default function CreateOrder() {
       };
     }
 
+    const requestId = rid();
+    const t0 = nowMs();
+
     try {
       setChecking(true);
+
       const res = await fetch(API_CREAR_ORDEN, {
         method: "POST",
         headers: {
@@ -143,15 +173,65 @@ export default function CreateOrder() {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const json = await res.json();
-      console.log("Respuesta crear orden:", json);
-      const created = json?.data ?? json;
+      const httpStatus = res.status;
+      const json = await res.json().catch(() => null);
+      const created = (json as any)?.data ?? json;
 
+      const durationMs = Math.round(nowMs() - t0);
+
+      if (!res.ok) {
+        // Log error en Inspector
+        pushError("createOrder", {
+          id: requestId,
+          httpStatus,
+          durationMs,
+          request: {
+            url: API_CREAR_ORDEN,
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body,
+          },
+          errorMessage: `HTTP ${httpStatus} - ${(json as any)?.message ?? "Error al crear la orden"}`,
+          meta: { note: method === "QR" ? "Creación QR" : "Creación Point" },
+        });
+        throw new Error(`HTTP ${httpStatus}`);
+      }
+
+      // Log success en Inspector
+      pushSuccess("createOrder", {
+        id: requestId,
+        httpStatus,
+        durationMs,
+        request: {
+          url: API_CREAR_ORDEN,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body,
+        },
+        response: json,
+        meta: { note: method === "QR" ? "Creación QR" : "Creación Point" },
+      });
+
+      // Estado de UI
       setCurrentOrderId(created?.id ?? null);
       setCurrentOrder(created ?? null);
-    } catch (err) {
+    } catch (err: any) {
+      // En caso de excepciones de red/parseo no capturadas arriba
+      const durationMs = Math.round(nowMs() - t0);
+      pushError("createOrder", {
+        id: requestId,
+        httpStatus: undefined,
+        durationMs,
+        request: {
+          url: API_CREAR_ORDEN,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body,
+        },
+        errorMessage: err?.message ?? "Error desconocido al crear la orden",
+        meta: { note: method === "QR" ? "Creación QR" : "Creación Point" },
+      });
       console.error("Error al crear la orden:", err);
     } finally {
       setChecking(false);
@@ -165,61 +245,157 @@ export default function CreateOrder() {
     shouldPrint,
     setCurrentOrder,
     setCurrentOrderId,
+    pushSuccess,
+    pushError,
   ]);
 
   const handleFetchOrder = useCallback(async () => {
     const id = currentOrder?.id ?? currentOrderId;
     if (!id) return;
 
+    const requestId = rid();
+    const t0 = nowMs();
+
     try {
       setFetching(true);
+      const body = { id };
+
       const res = await fetch(API_OBTENER_ORDEN, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const json = await res.json();
-      console.log("Respuesta obtener orden:", json);
-      const fetched = json?.data ?? json;
+      const httpStatus = res.status;
+      const json = await res.json().catch(() => null);
+      const fetched = (json as any)?.data ?? json;
+      const durationMs = Math.round(nowMs() - t0);
+
+      if (!res.ok) {
+        pushError("getOrder", {
+          id: requestId,
+          httpStatus,
+          durationMs,
+          request: {
+            url: API_OBTENER_ORDEN,
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body,
+          },
+          errorMessage: `HTTP ${httpStatus} - ${(json as any)?.message ?? "Error al obtener la orden"}`,
+        });
+        throw new Error(`HTTP ${httpStatus}`);
+      }
+
+      pushSuccess("getOrder", {
+        id: requestId,
+        httpStatus,
+        durationMs,
+        request: {
+          url: API_OBTENER_ORDEN,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body,
+        },
+        response: json,
+      });
 
       setCurrentOrderId(fetched?.id ?? id);
       setCurrentOrder(fetched ?? null);
-    } catch (err) {
+    } catch (err: any) {
+      const durationMs = Math.round(nowMs() - t0);
+      pushError("getOrder", {
+        id: requestId,
+        httpStatus: undefined,
+        durationMs,
+        request: {
+          url: API_OBTENER_ORDEN,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: { id: currentOrder?.id ?? currentOrderId },
+        },
+        errorMessage: err?.message ?? "Error desconocido al obtener la orden",
+      });
       console.error("Error al obtener la orden:", err);
     } finally {
       setFetching(false);
     }
-  }, [currentOrder?.id, currentOrderId, setCurrentOrder, setCurrentOrderId]);
+  }, [currentOrder?.id, currentOrderId, setCurrentOrder, setCurrentOrderId, pushSuccess, pushError]);
 
   const handleCancelOrder = useCallback(async () => {
     if (method !== "QR") return;
     const id = currentOrder?.id ?? currentOrderId;
     if (!id) return;
 
+    const requestId = rid();
+    const t0 = nowMs();
+
     try {
       setCancelling(true);
+      const body = { id };
+
       const res = await fetch(API_CANCELAR_ORDEN, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const json = await res.json();
-      console.log("Respuesta cancelar orden:", json);
-      const cancelled = json?.data ?? { id, status_detail: "canceled" };
+      const httpStatus = res.status;
+      const json = await res.json().catch(() => null);
+      const cancelled = (json as any)?.data ?? { id, status_detail: "canceled" };
+      const durationMs = Math.round(nowMs() - t0);
+
+      if (!res.ok) {
+        pushError("cancelOrder", {
+          id: requestId,
+          httpStatus,
+          durationMs,
+          request: {
+            url: API_CANCELAR_ORDEN,
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body,
+          },
+          errorMessage: `HTTP ${httpStatus} - ${(json as any)?.message ?? "Error al cancelar la orden"}`,
+        });
+        throw new Error(`HTTP ${httpStatus}`);
+      }
+
+      pushSuccess("cancelOrder", {
+        id: requestId,
+        httpStatus,
+        durationMs,
+        request: {
+          url: API_CANCELAR_ORDEN,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body,
+        },
+        response: json,
+      });
 
       setCurrentOrderId(cancelled?.id ?? id);
       setCurrentOrder(cancelled ?? null);
-    } catch (err) {
+    } catch (err: any) {
+      const durationMs = Math.round(nowMs() - t0);
+      pushError("cancelOrder", {
+        id: requestId,
+        httpStatus: undefined,
+        durationMs,
+        request: {
+          url: API_CANCELAR_ORDEN,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: { id: currentOrder?.id ?? currentOrderId },
+        },
+        errorMessage: err?.message ?? "Error desconocido al cancelar la orden",
+      });
       console.error("Error al cancelar la orden:", err);
     } finally {
       setCancelling(false);
@@ -230,9 +406,12 @@ export default function CreateOrder() {
     currentOrderId,
     setCurrentOrder,
     setCurrentOrderId,
+    pushSuccess,
+    pushError,
   ]);
 
-  // ▶️ Nuevo: consultar pago
+  // ▶️ Consulta de pago (no la agregaste al slice; si querés verla en el inspector,
+  // sumale un EndpointKey tipo "queryPayment" y acá logueamos igual que los demás)
   const handleConsultarPago = useCallback(async () => {
     const id = currentOrder?.id ?? currentOrderId;
     if (!id) return;
@@ -251,14 +430,15 @@ export default function CreateOrder() {
 
       const json = await res.json();
       console.log("Respuesta consulta pago:", json);
+      // 👉 Si agregás EndpointKey 'queryPayment', podés loguear acá como en los otros handlers
     } catch (err) {
       console.error("Error en consulta de pago:", err);
     } finally {
       setConsulting(false);
     }
-  }, [currentOrder?.id, currentOrderId /*, setCurrentOrder*/]);
+  }, [currentOrder?.id, currentOrderId]);
 
-  // ▶️ Nuevo: resetear configuración y limpiar orden
+  // ▶️ Reset
   const handleNuevaOrden = useCallback(() => {
     setCurrentOrder(null);
     setCurrentOrderId(null);
@@ -266,53 +446,26 @@ export default function CreateOrder() {
 
   return (
     <div className="space-y-3">
-      {/* Botonera superior:
-          - Si pago acreditado => mostrar acciones post-pago
-          - Si creada (no acreditada) => consultar / cancelar
-          - Si no hay orden => botón crear
-      */}
       {isPaidSuccess ? (
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleNuevaOrden}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium 
-                       shadow-sm hover:bg-white focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1"
-          >
-            Generar nueva orden de pago
-          </button>
-
-          <button
-            onClick={handleConsultarPago}
-            disabled={consulting}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-2 text-sm font-medium 
-                       shadow-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {consulting ? "Consultando…" : "Consultar pago"}
-          </button>
+          <NewOrderButton handleNuevaOrden={handleNuevaOrden} />
+          <QueryPayButton
+            handleConsultarPago={handleConsultarPago}
+            consulting={consulting}
+          />
         </div>
       ) : canShowQueryCancel ? (
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleFetchOrder}
-            disabled={fetching}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-medium 
-                       shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {fetching ? "Consultando…" : "Consultar orden"}
-          </button>
+          <QueryOrderButton
+            handleFetchOrder={handleFetchOrder}
+            fetching={fetching}
+          />
 
           {method === "QR" && (
-            <button
-              onClick={handleCancelOrder}
-              disabled={cancelling}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 text-white px-4 py-2 text-sm font-medium 
-                         shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-1 
-                         disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {cancelling ? "Cancelando…" : "Cancelar"}
-            </button>
+            <CancelButton
+              handleCancelOrder={handleCancelOrder}
+              cancelling={cancelling}
+            />
           )}
         </div>
       ) : (
@@ -323,85 +476,15 @@ export default function CreateOrder() {
         />
       )}
 
-      {/* Panel de detalle de la orden */}
       {currentOrder && (
-        <div className="mt-2 rounded-xl border border-zinc-200 p-3 text-sm bg-white">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs px-2 py-0.5 rounded-full border" title="status_detail">
-              Estado detalle: <b>{statusDetail ?? "—"}</b>
-            </span>
-            <span className="text-xs px-2 py-0.5 rounded-full border" title="status">
-              Estado: <b>{currentOrder.status ?? "—"}</b>
-            </span>
-
-            {/* ✅ badge de pago exitoso para ambos métodos */}
-            {isPaidSuccess && (
-              <span className="text-xs px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700">
-                ✅ Pago acreditado
-              </span>
-            )}
-          </div>
-
-          <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-            <div><span className="text-zinc-500">ID:</span> {currentOrder.id ?? "—"}</div>
-            <div><span className="text-zinc-500">Tipo:</span> {currentOrder.type ?? "—"}</div>
-            <div><span className="text-zinc-500">Moneda:</span> {currentOrder.currency ?? "—"}</div>
-            <div><span className="text-zinc-500">Monto:</span> {montoFromOrder ?? "—"}</div>
-            <div><span className="text-zinc-500">Creada:</span> {currentOrder.created_date ?? "—"}</div>
-            <div><span className="text-zinc-500">Actualizada:</span> {currentOrder.last_updated_date ?? "—"}</div>
-
-            {currentOrder?.config?.point && (
-              <>
-                <div>
-                  <span className="text-zinc-500">Terminal:</span>{" "}
-                  {currentOrder.config.point.terminal_id ?? "—"}
-                </div>
-                <div>
-                  <span className="text-zinc-500">Ticket #:</span>{" "}
-                  {currentOrder.config.point.ticket_number ?? "—"}
-                </div>
-                <div className="sm:col-span-2">
-                  <span className="text-zinc-500">Impresión:</span>{" "}
-                  {currentOrder.config.point.print_on_terminal ?? "—"}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Bloque QR */}
-          {shouldShowQr && (
-            <div className="mt-4 rounded-lg border border-zinc-200 p-3 bg-zinc-50">
-              <div className="mb-2 font-medium">Escaneá el QR para pagar</div>
-
-              {qrPayload?.type === "image" || qrPayload?.type === "image-url" ? (
-                <div className="flex items-center gap-4">
-                  <img
-                    src={qrPayload.src}
-                    alt={qrPayload.alt}
-                    className="w-44 h-44 rounded-md bg-white border"
-                  />
-                  {qrPayload.qrCodeText && (
-                    <div className="text-xs text-zinc-600 break-all">
-                      <span className="font-medium">QR data:</span> {qrPayload.qrCodeText}
-                    </div>
-                  )}
-                </div>
-              ) : qrPayload?.type === "text" ? (
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=264x264&data=${encodeURIComponent(
-                    qrPayload.text
-                  )}`}
-                  alt="QR para pagar"
-                  className="w-44 h-44 rounded-md bg-white border"
-                />
-              ) : (
-                <div className="text-xs text-amber-700">
-                  No se encontró la imagen del QR en la respuesta.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <OrderPanel
+          currentOrder={currentOrder as Order}
+          statusDetail={statusDetail}
+          isPaidSuccess={isPaidSuccess}
+          montoFromOrder={montoFromOrder}
+          shouldShowQr={shouldShowQr}
+          qrPayload={qrPayload as QrPayload}
+        />
       )}
     </div>
   );
