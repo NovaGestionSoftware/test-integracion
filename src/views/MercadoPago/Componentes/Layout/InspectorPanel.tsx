@@ -9,6 +9,7 @@ const ENDPOINT_META: Record<EndpointKey, { label: string }> = {
   getOrder: { label: "POST Obtener Orden" },
   cancelOrder: { label: "POST Cancelar Orden (QR)" },
   pointChangeOperatingMode: { label: "POST POINT Cambiar Modo" },
+  queryPayment: { label: "POST Consulta Pago" },
 };
 
 // ---- Selector helper (evita rerenders) ----

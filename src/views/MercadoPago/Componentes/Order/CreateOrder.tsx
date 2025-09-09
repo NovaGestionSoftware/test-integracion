@@ -412,31 +412,83 @@ const canShowQueryCancel =
 
   // ▶️ Consulta de pago (no la agregaste al slice; si querés verla en el inspector,
   // sumale un EndpointKey tipo "queryPayment" y acá logueamos igual que los demás)
-  const handleConsultarPago = useCallback(async () => {
-    const id = currentOrder?.id ?? currentOrderId;
-    if (!id) return;
+const handleConsultarPago = useCallback(async () => {
+  const id = currentOrder?.id ?? currentOrderId;
+  if (!id) return;
 
-    try {
-      setConsulting(true);
-      const res = await fetch(API_CONSULTA_PAGO, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+  const requestId = rid();
+  const t0 = nowMs();
+  const body = { id };
+
+  try {
+    setConsulting(true);
+
+    const res = await fetch(API_CONSULTA_PAGO, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const httpStatus = res.status;
+    const json = await res.json().catch(() => null);
+    const durationMs = Math.round(nowMs() - t0);
+
+    if (!res.ok) {
+      // ⬇️ Log error al Inspector
+      pushError("queryPayment", {
+        id: requestId,
+        httpStatus,
+        durationMs,
+        request: {
+          url: API_CONSULTA_PAGO,
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body,
         },
-        body: JSON.stringify({ id }),
+        errorMessage: `HTTP ${httpStatus} - ${(json as any)?.message ?? "Error al consultar pago"}`,
+        meta: { note: "Consulta de pago por ID" },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const json = await res.json();
-      console.log("Respuesta consulta pago:", json);
-      // 👉 Si agregás EndpointKey 'queryPayment', podés loguear acá como en los otros handlers
-    } catch (err) {
-      console.error("Error en consulta de pago:", err);
-    } finally {
-      setConsulting(false);
+      throw new Error(`HTTP ${httpStatus}`);
     }
-  }, [currentOrder?.id, currentOrderId]);
+
+    // ⬇️ Log success al Inspector
+    pushSuccess("queryPayment", {
+      id: requestId,
+      httpStatus,
+      durationMs,
+      request: {
+        url: API_CONSULTA_PAGO,
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body,
+      },
+      response: json,
+      meta: { note: "Consulta de pago por ID" },
+    });
+
+  } catch (err: any) {
+    const durationMs = Math.round(nowMs() - t0);
+    pushError("queryPayment", {
+      id: requestId,
+      httpStatus: undefined,
+      durationMs,
+      request: {
+        url: API_CONSULTA_PAGO,
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body,
+      },
+      errorMessage: err?.message ?? "Error desconocido en consulta de pago",
+      meta: { note: "Consulta de pago por ID" },
+    });
+    console.error("Error en consulta de pago:", err);
+  } finally {
+    setConsulting(false);
+  }
+}, [currentOrder?.id, currentOrderId, pushSuccess, pushError]);
 
   // ▶️ Reset
   const handleNuevaOrden = useCallback(() => {
