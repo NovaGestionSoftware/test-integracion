@@ -1,6 +1,7 @@
 import { FaSyncAlt } from "react-icons/fa";
 import { Card } from "./Card";
-import RefreshButton from "./RefreshButton";
+import RefreshButton from "./Buttons/RefreshButton";
+import ResCard from "./ResCard";
 
 interface EntidadBase {
   id: string | number;
@@ -89,7 +90,6 @@ export function EntidadFetcherCard<T extends EntidadBase>({
       className="p-6 h-full min-h-[260px] min-w-[205px] flex flex-col rounded-lg shadow bg-white"
     >
       {/* Barra de acciones */}
-
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <p className="text-green-700 text-lg font-medium">{titulo}</p>
@@ -173,19 +173,7 @@ export function EntidadFetcherCard<T extends EntidadBase>({
         </div>
 
         {/* Columna derecha: panel de respuesta (ocupa el resto) */}
-        {isShown && (
-          <div className="flex-1 max-w-2xs">
-            <div
-              className={`bg-zinc-50 rounded-md p-3 border border-zinc-200 ${contentScrollClass}`}
-            >
-              <pre className="text-xs whitespace-pre-wrap">
-                {responseRaw != null
-                  ? JSON.stringify(responseRaw, null, 2)
-                  : "—"}
-              </pre>
-            </div>
-          </div>
-        )}
+        {isShown && <ResCard responseRaw={responseRaw} />}
       </div>
     </Card>
   );
