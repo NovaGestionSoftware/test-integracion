@@ -13,7 +13,7 @@ export default function QueryOrderButton({fetching, handleFetchOrder}: Props) {
                        shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 
                        disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {fetching ? "Consultando…" : "Consultar orden"}
+      {fetching ? "Consultando…" : "Consultar ordén"}
     </button>
   );
 }

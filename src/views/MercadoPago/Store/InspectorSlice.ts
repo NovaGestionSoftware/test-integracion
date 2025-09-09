@@ -8,7 +8,8 @@ export type EndpointKey =
   | "createOrder"               // POST Crear Orden
   | "getOrder"                  // POST Obtener Orden
   | "cancelOrder"               // POST Cancelar Orden (QR)
-  | "pointChangeOperatingMode"; // POST POINT: Cambiar Modo Operación STANDALONE
+  | "pointChangeOperatingMode"  // POST POINT: Cambiar Modo Operación STANDALONE
+  | "queryPayment";             // POST Consulta Pago
 
 export type ApiStatus = "success" | "error";
 
@@ -92,6 +93,7 @@ export const inspectorInitialState: Pick<
     getOrder: [],
     cancelOrder: [],
     pointChangeOperatingMode: [],
+    queryPayment: [], // ⬅️ nuevo
   },
 };
 
