@@ -8,7 +8,7 @@ import ThumbtackButton from "./Components/ThumbtackButton";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { AnimatedOverflowText } from "./Components/AnimatedOverflowText";
 import { BsWhatsapp } from "react-icons/bs";
-import { TiHome } from "react-icons/ti";
+import { TiHome, TiPrinter } from "react-icons/ti";
 import { FaFileInvoiceDollar } from "react-icons/fa";
 import { SiMercadopago } from "react-icons/si";
 import { TbClover } from "react-icons/tb";
@@ -61,7 +61,7 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
     {
       title: "Controlador Fiscal",
       href: "/cf",
-      icon: <TbClover />,
+      icon: <TiPrinter />,
       orden: 5,
     },
   ];
