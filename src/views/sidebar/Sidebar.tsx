@@ -17,6 +17,7 @@ import { BsWhatsapp } from "react-icons/bs";
 import { TiHome } from "react-icons/ti";
 import { FaFileInvoiceDollar } from "react-icons/fa";
 import { SiMercadopago } from "react-icons/si";
+import { TbClover } from "react-icons/tb";
 type SideBarProps = {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -56,6 +57,18 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
       icon: <SiMercadopago className="scale-125" />,
       // icon: <img src={icon} alt="icon-mercado-pago" className="w-6 h-6" />,
       orden: 4,
+    },
+    {
+      title: "Clover",
+      href: "/clover",
+      icon: <TbClover />,
+      orden: 5,
+    },
+     {
+      title: "Controrlador Fiscal",
+      href: "/cf",
+      icon: <TbClover />,
+      orden: 5,
     },
   ];
 
