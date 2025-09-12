@@ -5,6 +5,8 @@ import WhatAppIntegrationView from "./views/whatsapp/WhatAppIntegrationView";
 import Home from "./views/home/HomeView";
 import FacturaElectronicaView from "./views/FacturaElectronica/FacturaElectronicaView";
 import MercadoPagoView from "./views/MercadoPago/MercadoPagoView";
+import CloverView from "./views/Clover/CloverView";
+import ControladorFiscalView from "./views/ControladorFiscal/ControladorFiscalView";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +19,8 @@ const router = createBrowserRouter([
       { path: "wpp", element: <WhatAppIntegrationView /> },
       { path: "fac-elec", element: <FacturaElectronicaView /> },
       { path: "mp", element: <MercadoPagoView /> },
+      { path: "clover", element: <CloverView /> },
+      { path: "cf", element: <ControladorFiscalView /> },
       // 404 para rutas dentro del layout fac-elec
       { path: "*", element: <div style={{ padding: 24 }}>404</div> },
     ],
