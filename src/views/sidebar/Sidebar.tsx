@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { Link, useLocation } from "react-router";
 import type { MenuItem } from "./types";
 import ResizableHandle from "./Components/ResizableHandle";
@@ -64,8 +58,8 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
       icon: <TbClover />,
       orden: 5,
     },
-     {
-      title: "Controrlador Fiscal",
+    {
+      title: "Controlador Fiscal",
       href: "/cf",
       icon: <TbClover />,
       orden: 5,
@@ -87,8 +81,7 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
     return menu.submenus.some(
       (submenu) =>
         submenu.href === location.pathname ||
-        (submenu.submenus &&
-          submenu.submenus.some((subsub) => subsub.href === location.pathname))
+        (submenu.submenus && submenu.submenus.some((subsub) => subsub.href === location.pathname))
     );
   };
 
@@ -101,16 +94,10 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
           <Link
             to={menu.href}
             className={`flex items-center text-white text-sm gap-x-2 cursor-pointer p-2 pr-4 rounded-l-md rounded-r-none mt-0.5 hover:bg-[#FFFFFF2B] hover:-translate-y-0.5 duration-300 overflow-hidden 2xl:text-base ${
-              location.pathname === menu.href
-                ? "bg-[#FFFFFF2B] -translate-y-0.5"
-                : ""
+              location.pathname === menu.href ? "bg-[#FFFFFF2B] -translate-y-0.5" : ""
             }`}
           >
-            <span
-              className={`duration-300 ${
-                location.pathname === menu.href ? "scale-110" : ""
-              }`}
-            >
+            <span className={`duration-300 ${location.pathname === menu.href ? "scale-110" : ""}`}>
               {menu.icon}
             </span>
             <span
@@ -130,9 +117,7 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
           >
             <span
               className={`duration-300 ${
-                menu.submenus?.some(
-                  (submenu) => submenu.href === location.pathname
-                )
+                menu.submenus?.some((submenu) => submenu.href === location.pathname)
                   ? "scale-110"
                   : ""
               }`}
@@ -168,9 +153,7 @@ export default function SideBar({ open, setOpen }: SideBarProps) {
                     <Link
                       to={submenu.href ?? "#"}
                       className={`text-white text-sm flex items-center gap-x-2 cursor-pointer p-2 pl-4 rounded-l-md rounded-r-none mt-0.5 hover:bg-[#FFFFFF2B] hover:-translate-y-0.5 duration-300 overflow-hidden ${
-                        submenu.href === location.pathname
-                          ? "bg-[#FFFFFF2B] -translate-y-0.5"
-                          : ""
+                        submenu.href === location.pathname ? "bg-[#FFFFFF2B] -translate-y-0.5" : ""
                       }`}
                     >
                       <span
